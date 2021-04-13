@@ -131,7 +131,7 @@ def collect_bill_text(urls, colname, csv=True):
     df = df[df[colname].notnull()].copy()
 
     df['text'] = df.apply(
-        lambda row: http_call(row.link, return_text=True), axis=1
+        lambda row: http_call(row[colname], return_text=True), axis=1
     )
 
     return df
@@ -180,16 +180,26 @@ def http_call(url, return_text=False):
 
 
 if __name__ == "__main__":
+    """
+    Note - running the entire ETL pipeline will likely take
+    anywhere from 6-8 hours. Makes roughly 90,000 HTTP requests
+    to obtain both the summaries and the bill text. Progress is 
+    displayed for the summaries collection, but not for the billl
+    text collection, as it applies the function on a DataFrame.
+    Could look into async options, but unsure of how many more requests
+    per second we can make (currently it averages 4-5/second).  
+    """
     bill_summaries = collect_summaries()
     df_summaries = pd.DataFrame(bill_summaries)
     df_summaries.to_csv("Summaries.csv", index=False)
-
+    print("Collecting Bill Info")
     bills_info = collect_bills_info()
     df_bills_info = pd.DataFrame(bills_info)
     df_bills_info.to_csv("Bills_Info.csv", index=False)
-
+    print("Joining Bill Info to Summaries")
     joined_data = join_summaries_to_bills(
         df_summaries, df_bills_info, csv=False)
     joined_data.to_csv("Joined_Summaries_To_Bills_Info.csv", index=False)
-
-    collect_bill_text(joined_data, 'link', csv=False)
+    print("Obtaining Bill Text - may take some time")
+    matched = collect_bill_text(joined_data, 'link', csv=False)
+    matched.to_csv("Joined_Summaries_To_Bills.csv", index=False)
