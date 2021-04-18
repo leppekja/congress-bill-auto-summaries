@@ -33,6 +33,14 @@ def replace_digits(summary):
     return re.sub('\d', '#', summary)
 
 
+def remove_whitespace_chars(summary):
+    '''
+    Remove slash n, t, r, f, and v chars; replace with space.
+    Need to run shorten_spaces after this. 
+    '''
+    return re.sub('[\t\n\r\f\v]', ' ', summary)
+
+
 def shorten_spaces(summary):
     '''
     If more than one space between characters, shortens to one.
@@ -45,14 +53,6 @@ def tokenize(summary):
     Split by word.
     '''
     return summary.str.split()
-
-
-def remove_whitespace_chars(summary):
-    '''
-    Remove slash n, t, r, f, and v chars; replace with space.
-    Need to run shorten_spaces after this. 
-    '''
-    return re.sub('[\t\n\r\f\v]', ' ', summary)
 
 
 def remove_parenthesis_text(summary):
@@ -81,6 +81,16 @@ def remove_textxml(text):
     Removes the textxml flag from the bills.
     '''
     return re.sub('textxml', '', text)
+
+
+def process(text, *argv):
+    '''
+    Processes text with the given functions as arguments.
+    '''
+    cleaned_text = text
+    for arg in argv:
+        cleaned_text = arg(cleaned_text)
+    return cleaned_text
 
 
 if __name__ == "__main__":
