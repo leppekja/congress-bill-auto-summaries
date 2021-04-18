@@ -34,3 +34,7 @@ TO DO:
 
 - Tokenize the words in this step? See preprocess.tokenize.
 - Delete summaries / bills outside the 25th to 75th percentile, or other word length? See [scientific abstract paper](https://arxiv.org/pdf/1804.08875.pdf).
+
+## Baseline
+
+We implement an extractive summary method that pulls the official-title section from the bill as a comparable baseline for our abstractive model. This may be found in extractive_summary.py, and uses the structure of the XML file to parse the text from the bill.
