@@ -35,6 +35,15 @@ TO DO:
 - Tokenize the words in this step? See preprocess.tokenize.
 - Delete summaries / bills outside the 25th to 75th percentile, or other word length? See [scientific abstract paper](https://arxiv.org/pdf/1804.08875.pdf).
 
+A custom Dataset class is available in load_data.py. Using the BillsDataset class implements a train, test, validation split method as well as Dataloaders. Indexing into a BillsDataset instance returns a dict of {summary_clean, bill_clean}.
+
+    from load_data import BillsDataset
+    data = BillsDataset('Cleaned_Summaries_And_Bills.csv', '', 'summary_clean','bill_clean')
+    # 50% training data, 20% testing data, 30% validation
+    data.split(.5, .2, .3)
+    # Batch size of 64
+    train_dataloader, test_dataloader, validate_dataloader = data.get_dataloaders(64, collate_fn=None)
+
 ## Baseline
 
 We implement an extractive summary method that pulls the official-title section from the bill as a comparable baseline for our abstractive model. This may be found in extractive_summary.py, and uses the structure of the XML file to parse the text from the bill.
