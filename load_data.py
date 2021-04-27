@@ -10,6 +10,7 @@ class BillsDataset(Dataset):
     """
     Dataset for Congressional Bills
     Adapted from https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
+    and from https://gist.github.com/kevinzakka/d33bf8d6c7f06a9d8c76d97a7879f5cb.
     """
 
     def __init__(self, csv, summaries_col, bills_col, transform=None):
