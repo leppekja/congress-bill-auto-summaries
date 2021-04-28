@@ -19,11 +19,14 @@ def lowercase(summary):
     return summary.lower()
 
 
-def remove_punctuation(summary):
+def remove_punctuation(summary, keep_periods=False):
     '''
     Note remove_punctuation needs to be run prior to digit replacement.
     '''
-    return re.sub('[^0-9a-zA-Z\s]', '', summary)
+    if keep_periods:
+        return re.sub('[^0-9a-zA-Z\s\.]', '', summary)
+    else:
+        return re.sub('[^0-9a-zA-Z\s]', '', summary)
 
 
 def replace_digits(summary):
@@ -50,9 +53,10 @@ def shorten_spaces(summary):
 
 def tokenize(summary):
     '''
-    Split by word.
+    Split by word. Adjusts for periods to exist in separate tokens.
     '''
-    return summary.str.split()
+    adjust_periods = re.sub('\.', ' .', summary)
+    return adjust_periods.split()
 
 
 def remove_parenthesis_text(summary):
@@ -83,14 +87,27 @@ def remove_textxml(text):
     return re.sub('textxml', '', text)
 
 
-def process(text, *argv):
+def process(text, *argv, **kwargs):
     '''
     Processes text with the given functions as arguments.
+    Requires kwargs tokenize and keep_periods. If not given,
+    results in non-tokenized and periods kept. 
     '''
     cleaned_text = text
+    try:
+        make_tokens = kwargs['tokenize']
+        keep_periods = kwargs['keep_periods']
+    except IndexError:
+        print('Tokenize and/or keep_periods args not passed.')
+        make_tokens = False
+        keep_periods = True
+    cleaned_test = remove_punctuation(cleaned_text, keep_periods)
     for arg in argv:
         cleaned_text = arg(cleaned_text)
-    return cleaned_text
+    if make_tokens:
+        return tokenize(cleaned_text)
+    else:
+        return cleaned_text
 
 
 if __name__ == "__main__":
@@ -105,6 +122,10 @@ if __name__ == "__main__":
                         action="store_true", help="Clean Summaries")
     parser.add_argument(
         "-b", '--bills', action="store_true", help="Clean Bills")
+    parser.add_argument(
+        "-t", '--tokenize', action="store_true", help="Tokenizes the words")
+    parser.add_argument(
+        "-p", '--keep_periods', action="store_true", help="Retains the periods in the text")
     args = parser.parse_args()
     df = pd.read_csv(args.csv)
 
@@ -113,27 +134,32 @@ if __name__ == "__main__":
         df['summary'] = df.summary.apply(remove_html_tags)
 
         # Create a new column with all special characters,etc, removed.
-        df['summary_clean'] = df.summary.apply(remove_html_tags)
-        df['summary_clean'] = df.summary_clean.apply(lowercase)
-        df['summary_clean'] = df.summary_clean.apply(remove_parenthesis_text)
-        df['summary_clean'] = df.summary_clean.apply(remove_whitespace_chars)
-        df['summary_clean'] = df.summary_clean.apply(remove_punctuation)
-        df['summary_clean'] = df.summary_clean.apply(replace_digits)
-        df['summary_clean'] = df.summary_clean.apply(shorten_spaces)
+        df['summary_clean'] = df.summary.apply(process,
+                                               args=(remove_html_tags,
+                                                     lowercase,
+                                                     remove_parenthesis_text,
+                                                     remove_whitespace_chars,
+                                                     replace_digits,
+                                                     shorten_spaces,
+                                                     ),
+                                               tokenize=args.tokenize,
+                                               keep_periods=args.keep_periods)
+
         if not args.bills:
             df.to_csv('Cleaned_Summaries.csv', index=False)
 
     if args.bills:
-        df['bill_clean'] = df.text.apply(remove_html_tags)
-        df['bill_clean'] = df.bill_clean.apply(lowercase)
-        df['bill_clean'] = df.bill_clean.apply(remove_parenthesis_text)
-        df['bill_clean'] = df.bill_clean.apply(remove_whitespace_chars)
-        df['bill_clean'] = df.bill_clean.apply(remove_punctuation)
-        df['bill_clean'] = df.bill_clean.apply(replace_digits)
-        df['bill_clean'] = df.bill_clean.apply(shorten_spaces)
-        df['bill_clean'] = df.bill_clean.apply(remove_bill_number)
-        df['bill_clean'] = df.bill_clean.apply(remove_textxml)
-
+        df['bill_clean'] = df.text.apply(process,
+                                         args=(remove_html_tags,
+                                               lowercase,
+                                               remove_parenthesis_text,
+                                               remove_whitespace_chars,
+                                               replace_digits,
+                                               shorten_spaces,
+                                               remove_bill_number,
+                                               remove_textxml),
+                                         tokenize=args.tokenize,
+                                         keep_periods=args.keep_periods)
         if args.summaries:
             df.to_csv('Cleaned_Summaries_And_Bills.csv', index=False)
         else:
