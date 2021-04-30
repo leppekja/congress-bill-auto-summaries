@@ -31,24 +31,51 @@ Run from the command line with:
 
     python preprocess.py 'file_path_to_csv.csv' -s -b -t -p
 
-Cleaning summaries is indicated with the -s flag; for bills, include the -b flag. It is also optional to tokenize words (-t) and keep periods (-p). Not including the -t or -p flags results in non-tokenized text with periods.
+Cleaning summaries is indicated with the -s flag; for bills, include the -b flag. It is also optional to tokenize words (-t) and keep periods (-p). Not including the -t or -p flags results in non-tokenized text without periods.
 
 Note that tokenized columns [are stored](https://stackoverflow.com/questions/23111990/pandas-dataframe-stored-list-as-string-how-to-convert-back-to-list) as strings when saved to CSV. To directly read in the tokenized columns as Python's list type, use:
 
-    df = pd.read_csv(df_name, converters={'summary_clean': eval, 'bill_clean':eval})
+    from ast import literal_eval
+    df = pd.read_csv(df_name, converters={'summary_clean': literal_eval, 'bill_clean': literal_eval})
 
-TO DO:
+To eliminate very long or short examples from the dataset, use:
 
-- Delete summaries / bills outside the 25th to 75th percentile, or other word length? See [scientific abstract paper](https://arxiv.org/pdf/1804.08875.pdf).
+    from preprocess import trim_dataset
+    # Delete any example lower than the 1st percentile and higher than the 99%
+    # percentile in the dataset in terms of length of bill or summary.
+    trimmed_df = trim_dataset(df, .01, .99)
 
-A custom Dataset class is available in load_data.py. Using the BillsDataset class implements a train, test, validation split method as well as Dataloaders. Indexing into a BillsDataset instance returns a dict of {summary_clean, bill_clean}.
+See [Data-Driven Summarization of Scientific Articles](https://arxiv.org/pdf/1804.08875.pdf) as an example of this step.
 
-    from load_data import BillsDataset
-    data = BillsDataset('Cleaned_Summaries_And_Bills.csv', '', 'summary_clean','bill_clean')
+## Dataset Analysis
+
+_Not yet complete_
+
+A collections of functions to review the dataset in the context of abstract summarization is included in dataset_statistics.py. This module provides the lengths of the summaries and bills, for example, as well as some indicators about how a summary relates to a bill.
+
+These functions reproduce statistics generated in [Data-Driven Summarization of Scientific Articles](https://arxiv.org/pdf/1804.08875.pdf).
+
+## Loading Data
+
+A custom Dataset class is available in load_data.py: BillsDataset. load_data.py also implements a train, test, validation split function, build_vocab function, as well as Dataloader creation. Split returns BillsDataset objects from train, test, and validation data. Indexing into a BillsDataset instance returns a dict of {'summary': summary_clean[idx], 'bill': bill_clean[idx]}.
+
+    from load_data import split, build_vocab, get_dataloaders
     # 50% training data, 20% testing data, 30% validation
-    data.split(.5, .2, .3)
+    train, test, validate = split(df, .5, .2. .3)
+    data = BillsDataset(df, 'summary_clean','bill_clean')
+    # Optional; get_dataloaders currently uses GloVe for word embeddings
+    vocab = build_vocab(training_data, 'summary','bill')
     # Batch size of 64
-    train_dataloader, test_dataloader, validate_dataloader = data.get_dataloaders(64, collate_fn=None)
+    # To find max bill/summary lengths, use preprocess.trim_dataset
+    dataloaders_dict = ld.get_dataloaders(64, max_summary_length (int), max_bill_length (int), train_data= train, test_data=test, valid_data = valid)
+
+Check dataloaders with:
+labels, features = next(iter(dataloader))
+
+    labels.size()
+    features.size()
+    labels[0]
+    features[0]
 
 ## Baseline
 

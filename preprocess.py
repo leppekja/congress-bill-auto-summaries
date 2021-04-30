@@ -100,7 +100,7 @@ def process(text, *argv, **kwargs):
     except IndexError:
         print('Tokenize and/or keep_periods args not passed.')
         make_tokens = False
-        keep_periods = True
+        keep_periods = False
     cleaned_test = remove_punctuation(cleaned_text, keep_periods)
     for arg in argv:
         cleaned_text = arg(cleaned_text)
@@ -108,6 +108,30 @@ def process(text, *argv, **kwargs):
         return tokenize(cleaned_text)
     else:
         return cleaned_text
+
+
+def trim_dataset(df, bottom_k_pct, top_k_pct):
+    '''
+    Remove the top and bottom n% records from the bills and summaries.
+    Expects tokenized and cleaned dataset.
+    Pass in pct as decimals.
+    '''
+    df['summary_length'] = df.summary_clean.apply(len)
+    df['bill_length'] = df.bill_clean.apply(len)
+    df['summary_rank'] = df.summary_length.rank(pct=True)
+    df['bill_rank'] = df.bill_length.rank(pct=True)
+    cut_df = df[(df.summary_rank > bottom_k_pct) & (df.summary_rank < top_k_pct) & (
+        df.bill_rank > bottom_k_pct) & (df.bill_rank < top_k_pct)]
+    print('Cut ' + str(df.shape[0] - cut_df.shape[0]) + ' records.')
+    print(f'New min summary length is {cut_df.summary_length.min()}')
+    print(f'New max summary length is {cut_df.summary_length.max()}')
+    print(f'New min bill length is {cut_df.bill_length.min()}')
+    print(f'New max bill length is {cut_df.bill_length.max()}')
+    del cut_df['bill_length']
+    del cut_df['summary_length']
+    del cut_df['summary_rank']
+    del cut_df['bill_rank']
+    return cut_df
 
 
 if __name__ == "__main__":
