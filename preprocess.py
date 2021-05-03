@@ -97,7 +97,7 @@ def process(text, *argv, **kwargs):
     try:
         make_tokens = kwargs['tokenize']
         keep_periods = kwargs['keep_periods']
-    except IndexError:
+    except KeyError as e:
         print('Tokenize and/or keep_periods args not passed.')
         make_tokens = False
         keep_periods = False

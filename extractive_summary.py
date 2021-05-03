@@ -37,7 +37,9 @@ def extract_summary(xml):
                                ps.replace_digits,
                                ps.remove_whitespace_chars,
                                ps.shorten_spaces,
-                               ps.remove_parenthesis_text
+                               ps.remove_parenthesis_text,
+                               tokenize=False,
+                               keep_periods=True
                                )
 
     return clean_summary
