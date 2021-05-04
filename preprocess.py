@@ -104,6 +104,9 @@ def process(text, *argv, **kwargs):
     cleaned_test = remove_punctuation(cleaned_text, keep_periods)
     for arg in argv:
         cleaned_text = arg(cleaned_text)
+
+    # Add start and end of sentence tokens
+    cleaned_text = '<sos> ' + cleaned_text + ' <eos>'
     if make_tokens:
         return tokenize(cleaned_text)
     else:
@@ -120,8 +123,8 @@ def trim_dataset(df, bottom_k_pct, top_k_pct):
     df['bill_length'] = df.bill_clean.apply(len)
     df['summary_rank'] = df.summary_length.rank(pct=True)
     df['bill_rank'] = df.bill_length.rank(pct=True)
-    cut_df = df[(df.summary_rank > bottom_k_pct) & (df.summary_rank < top_k_pct) & (
-        df.bill_rank > bottom_k_pct) & (df.bill_rank < top_k_pct)]
+    cut_df = df[(df.summary_rank >= bottom_k_pct) & (df.summary_rank <= top_k_pct) & (
+        df.bill_rank >= bottom_k_pct) & (df.bill_rank <= top_k_pct)]
     print('Cut ' + str(df.shape[0] - cut_df.shape[0]) + ' records.')
     print(f'New min summary length is {cut_df.summary_length.min()}')
     print(f'New max summary length is {cut_df.summary_length.max()}')
