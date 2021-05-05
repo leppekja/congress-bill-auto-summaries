@@ -28,8 +28,8 @@ def train_an_epoch(model, dataloader, optimizer):
 
     for idx, (label, text) in enumerate(dataloader):
         model.zero_grad()
-        probs = model(text)
-
+        probs = model(label, text)
+        print(probs.shape)
         loss = loss_function(probs, label)
         loss.backward()
         optimizer.step()
@@ -56,9 +56,12 @@ class Encoder(nn.Module):
         self.rnn = nn.LSTM(self.input_size, self.hidden_size)
 
     def forward(self, text):
+        # returns size (batch, 300, input_size)
         embedded = self.embedding(text).view(len(text), 300, -1)
-        print(embedded.size())
+
         outputs, (hidden, cell) = self.rnn(embedded)
+
+        # each of these are size (1, 300, hidden_size)
         return hidden, cell
 
     def initHidden(self):
@@ -66,24 +69,58 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, output_dim, embedded_dim, hidden_dim, pretrained_embeddings):
+    def __init__(self, output_dim, hidden_dim, pretrained_embeddings, freeze_glove=False):
         super().__init__()
 
+        # output dim should equal vocab size
         self.output_dim = output_dim
-        self.embedded_dim = embedded_dim
         self.hidden_dim = hidden_dim
-
+        self.rnn = nn.LSTM(300, hidden_dim)
+        self.fc_out = nn.Linear(hidden_dim, output_dim)
         self.embedding = nn.Embedding.from_pretrained(
-            self.pretrained_embeddings, freeze=freeze_glove)
+            pretrained_embeddings, freeze=freeze_glove)
 
-    def forward(self, input, hidden, cell):
+    def forward(self, input_word, hidden, cell):
 
-        input = input.unsqueeze(0)
-
-        embedded = self.embedding(input)
-
+        # input = input.unsqueeze(0)
+        print(input_word.size())
+        print(hidden.size())
+        print(cell.size())
+        embedded = self.embedding(input_word)  # .view(len(input), 300, -1)
+        print(embedded.size())
         output, (hidden, cell) = self.rnn(embedded, (hidden, cell))
 
         prediction = self.fc_out(output.squeeze(0))
 
         return prediction, hidden, cell
+
+
+class Seq2Seq(nn.Module):
+    def __init__(self, encoder, decoder, device):
+        super().__init__()
+
+        self.encoder = encoder
+        self.decoder = decoder
+        self.device = device
+
+    def forward(self, label, text):
+        batch_size = label.shape[1]
+        label_length = label.shape[0]
+        vocab_size = self.decoder.output_dim
+
+        outputs = torch.zeros(label_length, batch_size, vocab_size)
+
+        hidden, cell = self.encoder(text)
+
+        input_word = label[0, :]
+
+        for t in range(1, label_length):
+            output, hidden, cell = self.decoder(input_word, hidden, cell)
+            outputs[t] = output
+
+            # pick next word
+            top_choice = output.argmax(1)
+
+            input_word = top_choice
+
+        return outputs
