@@ -25,6 +25,7 @@ Pre-processing steps include:
 - replacing digits with #
 - remove XML specific content
 - remove bill number
+- add start and end of sentence tags
 - tokenize words
 
 Run from the command line with:
@@ -61,13 +62,13 @@ A custom Dataset class is available in load_data.py: BillsDataset. load_data.py 
 
     from load_data import split, build_vocab, get_dataloaders
     # 50% training data, 20% testing data, 30% validation
-    train, test, validate = split(df, .5, .2. .3)
-    data = BillsDataset(df, 'summary_clean','bill_clean')
-    # Optional; get_dataloaders currently uses GloVe for word embeddings
+    train, test, validate = split(df, .5, .2, .3)
+
+    # build vocab for word indexes. Pass this into the get_dataloaders function.
     vocab = build_vocab(training_data, 'summary','bill')
     # Batch size of 64
-    # To find max bill/summary lengths, use preprocess.trim_dataset
-    dataloaders_dict = ld.get_dataloaders(64, max_summary_length (int), max_bill_length (int), train_data= train, test_data=test, valid_data = valid)
+    # To find max bill/summary lengths, use preprocess.trim_dataset(df, 0, 1)
+    dataloaders_dict = ld.get_dataloaders(64, vocab, max_summary_length (int), max_bill_length (int), train_data= train, test_data=test, valid_data = valid)
 
 Check dataloaders with:
 labels, features = next(iter(dataloader))
@@ -77,9 +78,18 @@ labels, features = next(iter(dataloader))
     labels[0]
     features[0]
 
-## Baseline
+## Baseline Model
 
 We implement an extractive summary method that pulls the official-title section from the bill as a comparable baseline for our abstractive model. This may be found in extractive_summary.py, and uses the structure of the XML file to parse the text from the bill.
+
+## Encoder Decoder Model
+
+    import model as md
+    import load_data as ld
+
+    vocab = ld.build_vocab(training_data)
+    glove = md.build_glove(vocab.itos)
+    encoder = md.Encoder(max_summary_length, hidden_size, glove)
 
 ## References
 
@@ -91,6 +101,7 @@ We implement an extractive summary method that pulls the official-title section 
 
 #### Models
 
+- [Sequence to Sequence Learning with Neural Networks](https://colab.research.google.com/github/bentrevett/pytorch-seq2seq/blob/master/1%20-%20Sequence%20to%20Sequence%20Learning%20with%20Neural%20Networks.ipynb#scrollTo=osmt4oYsCVgO)
 - [Get To The Point: Summarization with POinter-Generator Networks](https://www.aclweb.org/anthology/P17-1099.pdf)
 - [Summary Level Training of Sentence Rewriting for Abstractive Summarization](https://www.aclweb.org/anthology/D19-5402.pdf)
 - [Abstractive Summarization Methods](https://medium.com/sciforce/towards-automatic-summarization-part-2-abstractive-methods-c424386a65ea)

@@ -4,7 +4,7 @@ import pandas as pd
 from numpy import floor
 from numpy.random import shuffle
 from torch.utils.data import Dataset, DataLoader
-from torchtext.vocab import GloVe, Vocab
+from torchtext.vocab import Vocab
 import torch.nn.functional as F
 from collections import Counter
 from functools import partial
@@ -78,10 +78,6 @@ def collate_bills_fn(batch, vocab, max_summary_length=512, max_bill_length=2048)
     Collates the batches into the dataloader. Pads unequal lengths with zeros
     based on the max lengths given.
     '''
-    # https://nlp.stanford.edu/projects/glove/
-    VECTORS_CACHE_DIR = './.vector_cache'
-    glove = GloVe(name='6B', cache=VECTORS_CACHE_DIR)
-
     labels = []
     texts = []
     for idx, text_dict in enumerate(batch):
@@ -110,8 +106,8 @@ def collate_bills_fn(batch, vocab, max_summary_length=512, max_bill_length=2048)
             text_vectors.extend([0] * text_to_pad)
             # text_vectors = F.pad(text_vectors, (0, 0, 0, text_to_pad))
 
-        labels.append(torch.Tensor(label_vectors))
-        texts.append(torch.Tensor(text_vectors))
+        labels.append(torch.LongTensor(label_vectors))
+        texts.append(torch.LongTensor(text_vectors))
     # Returns shape of (batch size, max_summary_length, embedding length) for each
     return (torch.stack(labels), torch.stack(texts))
 
