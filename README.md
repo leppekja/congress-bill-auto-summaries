@@ -89,7 +89,10 @@ We implement an extractive summary method that pulls the official-title section 
 
     vocab = ld.build_vocab(training_data)
     glove = md.build_glove(vocab.itos)
-    encoder = md.Encoder(max_summary_length, hidden_size, glove)
+    # bill or summary length?
+    encoder = md.Encoder(max_bill_length, hidden_size, glove_vectors)
+    adams = optim.Adam(encoder.parameters(), lr=.0001)
+    md.train_an_epoch(encoder, dataloaders_dict['train_data'], adams)
 
 ## References
 

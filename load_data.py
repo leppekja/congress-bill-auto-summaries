@@ -108,7 +108,7 @@ def collate_bills_fn(batch, vocab, max_summary_length=512, max_bill_length=2048)
 
         labels.append(torch.LongTensor(label_vectors))
         texts.append(torch.LongTensor(text_vectors))
-    # Returns shape of (batch size, max_summary_length, embedding length) for each
+    # Returns shape of (batch size, max_summary (or bill)_length) for each
     return (torch.stack(labels), torch.stack(texts))
 
 

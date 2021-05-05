@@ -56,7 +56,8 @@ class Encoder(nn.Module):
         self.rnn = nn.LSTM(self.input_size, self.hidden_size)
 
     def forward(self, text):
-        embedded = self.embedding(text).view(len(text), -1)
+        embedded = self.embedding(text).view(len(text), 300, -1)
+        print(embedded.size())
         outputs, (hidden, cell) = self.rnn(embedded)
         return hidden, cell
 
