@@ -119,8 +119,8 @@ def trim_dataset(df, bottom_k_pct, top_k_pct):
     Expects tokenized and cleaned dataset.
     Pass in pct as decimals.
     '''
-    df['summary_length'] = df.summary_clean.apply(len)
-    df['bill_length'] = df.bill_clean.apply(len)
+    df['summary_length'] = df.summary_clean.apply(lambda x: len(x))
+    df['bill_length'] = df.bill_clean.apply(lambda x: len(x))
     df['summary_rank'] = df.summary_length.rank(pct=True)
     df['bill_rank'] = df.bill_length.rank(pct=True)
     cut_df = df[(df.summary_rank >= bottom_k_pct) & (df.summary_rank <= top_k_pct) & (

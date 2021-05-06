@@ -37,6 +37,7 @@ Cleaning summaries is indicated with the -s flag; for bills, include the -b flag
 Note that tokenized columns [are stored](https://stackoverflow.com/questions/23111990/pandas-dataframe-stored-list-as-string-how-to-convert-back-to-list) as strings when saved to CSV. To directly read in the tokenized columns as Python's list type, use:
 
     from ast import literal_eval
+    import pandas as pd
     df = pd.read_csv(df_name, converters={'summary_clean': literal_eval, 'bill_clean': literal_eval})
 
 To eliminate very long or short examples from the dataset, use:
@@ -53,6 +54,8 @@ See [Data-Driven Summarization of Scientific Articles](https://arxiv.org/pdf/180
 _Not yet complete_
 
 A collections of functions to review the dataset in the context of abstract summarization is included in dataset_statistics.py. This module provides the lengths of the summaries and bills, for example, as well as some indicators about how a summary relates to a bill.
+
+The overlap measure is defined as the union between words in the input text and output summary over the number of words in the output summary. For the full dataset, the average overlap is 77% \pm 14%. The max overlap score is 1, which means for some summaries, all of the words used were featured in the bills dataset. The minimum overlap score as 17%.
 
 These functions reproduce statistics generated in [Data-Driven Summarization of Scientific Articles](https://arxiv.org/pdf/1804.08875.pdf).
 

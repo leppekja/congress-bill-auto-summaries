@@ -52,3 +52,25 @@ def token_summaries(data, colname, csv=True):
     print('Min Length of ' + colname + ': ', lengths.min())
     print(
         f'Percentiles: 25th: {lquantiles[0.25]}, 50th: {lquantiles[0.50]}, 75th: {lquantiles[0.75]}, 99th: {lquantiles[0.99]}')
+
+
+def get_overlap(df):
+    '''
+    Assumes data has already be processed.
+    Prints out a basic series of statistics.
+    '''
+    outputs = []
+    for row in df.itertuples():
+        outputs.append(check_word(row.summary_clean, row.bill_clean))
+    return outputs
+
+
+def check_word(output_words, input_words):
+    '''
+    Helper function to obtain overlap measure.
+    '''
+    count = 0
+    for word in output_words:
+        if word in input_words:
+            count += 1
+    return count / len(output_words)
