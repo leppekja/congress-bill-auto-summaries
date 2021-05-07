@@ -128,7 +128,7 @@ class Seq2Seq(nn.Module):
             outputs[t] = output
 
             # pick next word
-            top_choice = output.argmax(tgf1)
+            top_choice = output.argmax(1)
 
             input_word = top_choice
 
