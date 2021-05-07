@@ -103,7 +103,9 @@ We implement an extractive summary method that pulls the official-title section 
 
     vocab = ld.build_vocab(training_data)
     glove = md.build_glove(vocab.itos)
+    # 300, 256, glove_vecs
     encoder = md.Encoder(max_bill_length, hidden_size, glove_vectors).to(device)
+    # hidden size 256
     decoder = md.Decoder(len(vocab), hidden_size, glove_vecs).to(device)
     seq = md.Seq2Seq()
     adams = optim.Adam(encoder.parameters(), lr=.0001)
