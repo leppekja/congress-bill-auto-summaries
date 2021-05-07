@@ -9,6 +9,8 @@ import torch.nn.functional as F
 from collections import Counter
 from functools import partial
 
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 def build_vocab(training_data, summary_col='summary', bill_col='bill'):
     '''
@@ -109,7 +111,7 @@ def collate_bills_fn(batch, vocab, max_summary_length=512, max_bill_length=2048)
         labels.append(torch.LongTensor(label_vectors))
         texts.append(torch.LongTensor(text_vectors))
     # Returns shape of (batch size, max_summary (or bill)_length) for each
-    return (torch.stack(labels), torch.stack(texts))
+    return (torch.stack(labels).to(DEVICE), torch.stack(texts).to(DEVICE))
 
 
 class BillsDataset(Dataset):

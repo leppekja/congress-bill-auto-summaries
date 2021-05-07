@@ -2,6 +2,7 @@ import re
 import sys
 import argparse
 import pandas as pd
+import dataset_statistics as ds
 
 
 def remove_html_tags(summary):
@@ -124,12 +125,13 @@ def trim_dataset(df, bottom_k_pct, top_k_pct):
     df['summary_rank'] = df.summary_length.rank(pct=True)
     df['bill_rank'] = df.bill_length.rank(pct=True)
     cut_df = df[(df.summary_rank >= bottom_k_pct) & (df.summary_rank <= top_k_pct) & (
-        df.bill_rank >= bottom_k_pct) & (df.bill_rank <= top_k_pct)]
+        df.bill_rank >= bottom_k_pct) & (df.bill_rank <= top_k_pct) & (df.summary_length <= df.bill_length)]
     print('Cut ' + str(df.shape[0] - cut_df.shape[0]) + ' records.')
     print(f'New min summary length is {cut_df.summary_length.min()}')
     print(f'New max summary length is {cut_df.summary_length.max()}')
     print(f'New min bill length is {cut_df.bill_length.min()}')
     print(f'New max bill length is {cut_df.bill_length.max()}')
+    print(f'Compression of summaries to bills is {ds.compression(cut_df)}')
     del cut_df['bill_length']
     del cut_df['summary_length']
     del cut_df['summary_rank']

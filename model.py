@@ -44,7 +44,6 @@ class Encoder(nn.Module):
                  hidden_size,
                  pretrained_embeddings,
                  freeze_glove=False,
-                 batch_first=True,
                  ):
         super(Encoder, self).__init__()
         self.input_size = input_size
@@ -56,12 +55,17 @@ class Encoder(nn.Module):
         self.rnn = nn.LSTM(self.input_size, self.hidden_size)
 
     def forward(self, text):
-        # returns size (batch, 300, input_size)
-        embedded = self.embedding(text).view(len(text), 300, -1)
-
+        print('text: ', text.size())
+        # Text size is batch size, bill length
+        embedded = self.embedding(text).view(-1, len(text), 300)
+        # Embedded size is sequence length, batch size, glove vecs size
+        print('embedded: ', embedded.size())
         outputs, (hidden, cell) = self.rnn(embedded)
-
-        # each of these are size (1, 300, hidden_size)
+        print('outputs: ', outputs.size())
+        print('hidden: ', hidden.size())
+        print('cell: ', cell.size())
+        print('end of encoder')
+        # each of these are size (1, batch_size, hidden_size)
         return hidden, cell
 
     def initHidden(self):
@@ -82,12 +86,12 @@ class Decoder(nn.Module):
 
     def forward(self, input_word, hidden, cell):
 
-        # input = input.unsqueeze(0)
-        print(input_word.size())
-        print(hidden.size())
-        print(cell.size())
+        input_word = input_word.unsqueeze(0)
+        print('input: ', input_word.size())
+        print('hidden: ', hidden.size())
+        print('cell: ', cell.size())
         embedded = self.embedding(input_word)  # .view(len(input), 300, -1)
-        print(embedded.size())
+        print('embedded: ', embedded.size())
         output, (hidden, cell) = self.rnn(embedded, (hidden, cell))
 
         prediction = self.fc_out(output.squeeze(0))
@@ -104,22 +108,27 @@ class Seq2Seq(nn.Module):
         self.device = device
 
     def forward(self, label, text):
-        batch_size = label.shape[1]
-        label_length = label.shape[0]
+        batch_size = label.shape[0]
+        print('batch size: ', batch_size)
+        label_length = label.shape[1]
+        print('label_length: ', label_length)
         vocab_size = self.decoder.output_dim
 
         outputs = torch.zeros(label_length, batch_size, vocab_size)
 
         hidden, cell = self.encoder(text)
-
-        input_word = label[0, :]
+        input_word = label[:, 0]
+        print('input word: ', input_word)
+        print(label.size())
 
         for t in range(1, label_length):
             output, hidden, cell = self.decoder(input_word, hidden, cell)
+            print('output size: ', output.size())
+            print('outputs: ', outputs.size())
             outputs[t] = output
 
             # pick next word
-            top_choice = output.argmax(1)
+            top_choice = output.argmax(tgf1)
 
             input_word = top_choice
 

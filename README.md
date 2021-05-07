@@ -45,6 +45,8 @@ To eliminate very long or short examples from the dataset, use:
     from preprocess import trim_dataset
     # Delete any example lower than the 1st percentile and higher than the 99%
     # percentile in the dataset in terms of length of bill or summary.
+    # this also calculates and deletes any summary-bill pair
+    # in which the summary is longer than the bill text
     trimmed_df = trim_dataset(df, .01, .99)
 
 See [Data-Driven Summarization of Scientific Articles](https://arxiv.org/pdf/1804.08875.pdf) as an example of this step.
@@ -55,7 +57,10 @@ _Not yet complete_
 
 A collections of functions to review the dataset in the context of abstract summarization is included in dataset_statistics.py. This module provides the lengths of the summaries and bills, for example, as well as some indicators about how a summary relates to a bill.
 
-The overlap measure is defined as the union between words in the input text and output summary over the number of words in the output summary. For the full dataset, the average overlap is 77% \pm 14%. The max overlap score is 1, which means for some summaries, all of the words used were featured in the bills dataset. The minimum overlap score as 17%.
+The overlap measure is defined as the union between words in the input text and output summary over the number of words in the output summary. For the full dataset, the average overlap is 77% (plus-minus 14%). The max overlap score is 1, which means for some summaries, all of the words used were featured in the bills dataset. The minimum overlap score is 17%.
+
+Some summaries are actually longer than the text of the bills themselves. To account for this, we only retain summary-bill pairs with a summary-length : bill-length ratio of 1 or lower.
+In this set, we see that the average length of a summary is roughly 20% (plus-minus 18%) of its bill.
 
 These functions reproduce statistics generated in [Data-Driven Summarization of Scientific Articles](https://arxiv.org/pdf/1804.08875.pdf).
 
@@ -67,6 +72,8 @@ A custom Dataset class is available in load_data.py: BillsDataset. load_data.py 
     # 50% training data, 20% testing data, 30% validation
     train, test, validate = split(df, .5, .2, .3)
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     # build vocab for word indexes. Pass this into the get_dataloaders function.
     vocab = build_vocab(training_data, 'summary','bill')
     # Batch size of 64
@@ -74,8 +81,8 @@ A custom Dataset class is available in load_data.py: BillsDataset. load_data.py 
     dataloaders_dict = ld.get_dataloaders(64, vocab, max_summary_length (int), max_bill_length (int), train_data= train, test_data=test, valid_data = valid)
 
 Check dataloaders with:
-labels, features = next(iter(dataloader))
 
+    labels, features = next(iter(dataloader))
     labels.size()
     features.size()
     labels[0]
@@ -89,11 +96,16 @@ We implement an extractive summary method that pulls the official-title section 
 
     import model as md
     import load_data as ld
+    import torch.optim as optim
+    import torch
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     vocab = ld.build_vocab(training_data)
     glove = md.build_glove(vocab.itos)
-    # bill or summary length?
-    encoder = md.Encoder(max_bill_length, hidden_size, glove_vectors)
+    encoder = md.Encoder(max_bill_length, hidden_size, glove_vectors).to(device)
+    decoder = md.Decoder(len(vocab), hidden_size, glove_vecs).to(device)
+    seq = md.Seq2Seq()
     adams = optim.Adam(encoder.parameters(), lr=.0001)
     md.train_an_epoch(encoder, dataloaders_dict['train_data'], adams)
 

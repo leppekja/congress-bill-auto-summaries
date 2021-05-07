@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import numpy as np
 import preprocess as pr
 
 
@@ -74,3 +75,7 @@ def check_word(output_words, input_words):
         if word in input_words:
             count += 1
     return count / len(output_words)
+
+
+def compression(df):
+    return np.mean(df.summary_clean.apply(len) / df.bill_clean.apply(len)).round(3)
