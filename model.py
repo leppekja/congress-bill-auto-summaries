@@ -11,7 +11,8 @@ random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = "cpu"
 
 
 def build_glove(vocab):
@@ -22,15 +23,22 @@ def build_glove(vocab):
     return glove_vectors
 
 
-def train_an_epoch(model, dataloader, optimizer):
+def train_an_epoch(model, dataloader, optimizer, loss_function):
+    # loss_function = nn.CrossEntropyLoss().to(device)
     model.train()
     log_interval = 500
 
     for idx, (label, text) in enumerate(dataloader):
         model.zero_grad()
-        probs = model(label, text)
-        print(probs.shape)
-        loss = loss_function(probs, label)
+        output = model(label, text)
+        output_dim = output.shape[-1]
+        print('initial', output.size())
+        print(label.size())
+        output = output.view(-1, output_dim)
+        target = label.view(-1)
+        print(output.size())
+        print(target.size())
+        loss = loss_function(output, target)
         loss.backward()
         optimizer.step()
 
@@ -43,6 +51,7 @@ class Encoder(nn.Module):
                  input_size,
                  hidden_size,
                  pretrained_embeddings,
+                 device,
                  freeze_glove=False,
                  ):
         super(Encoder, self).__init__()
@@ -55,16 +64,16 @@ class Encoder(nn.Module):
         self.rnn = nn.LSTM(self.input_size, self.hidden_size)
 
     def forward(self, text):
-        print('text: ', text.size())
+        # print('text: ', text.size())
         # Text size is batch size, bill length
         embedded = self.embedding(text).view(-1, len(text), 300)
         # Embedded size is sequence length, batch size, glove vecs size
-        print('embedded: ', embedded.size())
+        # print('embedded: ', embedded.size())
         outputs, (hidden, cell) = self.rnn(embedded)
-        print('outputs: ', outputs.size())
-        print('hidden: ', hidden.size())
-        print('cell: ', cell.size())
-        print('end of encoder')
+        # print('outputs: ', outputs.size())
+        # print('hidden: ', hidden.size())
+        # print('cell: ', cell.size())
+        # print('end of encoder')
         # each of these are size (1, batch_size, hidden_size)
         return hidden, cell
 
@@ -87,11 +96,11 @@ class Decoder(nn.Module):
     def forward(self, input_word, hidden, cell):
 
         input_word = input_word.unsqueeze(0)
-        print('input: ', input_word.size())
-        print('hidden: ', hidden.size())
-        print('cell: ', cell.size())
+        # print('input: ', input_word.size())
+        # print('hidden: ', hidden.size())
+        # print('cell: ', cell.size())
         embedded = self.embedding(input_word)  # .view(len(input), 300, -1)
-        print('embedded: ', embedded.size())
+        # print('embedded: ', embedded.size())
         output, (hidden, cell) = self.rnn(embedded, (hidden, cell))
 
         prediction = self.fc_out(output.squeeze(0))
@@ -109,27 +118,29 @@ class Seq2Seq(nn.Module):
 
     def forward(self, label, text):
         batch_size = label.shape[0]
-        print('batch size: ', batch_size)
+        # print('batch size: ', batch_size)
         label_length = label.shape[1]
-        print('label_length: ', label_length)
+        # print('label_length: ', label_length)
         vocab_size = self.decoder.output_dim
 
-        outputs = torch.zeros(label_length, batch_size, vocab_size)
+        outputs = torch.zeros(label_length, batch_size,
+                              vocab_size).to(self.device)
 
         hidden, cell = self.encoder(text)
         input_word = label[:, 0]
-        print('input word: ', input_word)
-        print(label.size())
+        # print('input word: ', input_word)
+        # print(label.size())
 
         for t in range(1, label_length):
             output, hidden, cell = self.decoder(input_word, hidden, cell)
-            print('output size: ', output.size())
-            print('outputs: ', outputs.size())
+            # print('output size: ', output.size())
+            # print('outputs: ', outputs.size())
             outputs[t] = output
 
             # pick next word
             top_choice = output.argmax(1)
 
             input_word = top_choice
-
+        # print('outputs', outputs.size)
+        # print(outputs)
         return outputs

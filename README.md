@@ -102,14 +102,14 @@ We implement an extractive summary method that pulls the official-title section 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     vocab = ld.build_vocab(training_data)
-    glove = md.build_glove(vocab.itos)
+    glove = md.build_glove(vocab)
     # 300, 256, glove_vecs
-    encoder = md.Encoder(max_bill_length, hidden_size, glove_vectors).to(device)
+    encoder = md.Encoder(input_features_length, hidden_size,  glove_vectors, device).to(device)
     # hidden size 256
     decoder = md.Decoder(len(vocab), hidden_size, glove_vecs).to(device)
-    seq = md.Seq2Seq()
+    seq = md.Seq2Seq(encoder, decoder, device)
     adams = optim.Adam(encoder.parameters(), lr=.0001)
-    md.train_an_epoch(encoder, dataloaders_dict['train_data'], adams)
+    md.train_an_epoch(seq, dataloaders_dict['train_data'], adams)
 
 ## References
 
