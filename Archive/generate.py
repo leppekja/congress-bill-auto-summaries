@@ -3,6 +3,10 @@ from torch import nn
 
 
 class Generator(nn.Module):
+    '''
+    The decoder for the Seq2Seq model. Deprecated!
+    '''
+
     def __init__(self, input_size, hidden_size, output_size, num_layers, embeddings):
         super().__init__()
         self.input_size = input_size

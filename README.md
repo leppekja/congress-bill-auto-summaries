@@ -10,6 +10,8 @@ A requirements.txt file is available with the requisite packages necessary to co
 
 Each folder has its own README with file descriptions. Please refer to folders for information on data collection and preprocessing, as well as supplementary model functions that were later incorporated into the Jupyter Notebooks on the top level of the repository.
 
+Note that files in the Archive directory are variations and/or historical artifacts from current iterations of the models.
+
 ## Baseline Model
 
 We implement an extractive summary method that pulls the official-title section from the bill as a comparable baseline for our abstractive model. This may be found in extractive_summary.py, and uses the structure of the XML file to parse the text from the bill.
