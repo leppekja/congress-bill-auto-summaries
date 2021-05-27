@@ -133,3 +133,4 @@ dmypy.json
 
 # Files
 *.csv
+/finished_files

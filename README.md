@@ -12,7 +12,9 @@ Each folder has its own README with file descriptions. Please refer to folders f
 
 Note that files in the Archive directory are variations and/or historical artifacts from current iterations of the models.
 
-## Baseline Model
+## Baseline Models
+
+We adapted [NLP From Scratch: Translation with a Sequence to Sequence Model with Attention](https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html) from PyTorch. Credit to Sean Robertson for their authorship. Cells written by us are noted within the notebook; minor changes are made otherwise.
 
 We implement an extractive summary method that pulls the official-title section from the bill as a comparable baseline for our abstractive model. This may be found in extractive_summary.py, and uses the structure of the XML file to parse the text from the bill.
 
@@ -40,8 +42,6 @@ We implement an extractive summary method that pulls the official-title section 
 #### Data Preprocessing
 
 - [Stanford NLP Toolkit](https://www.aclweb.org/anthology/P14-5010.pdf)
-
-#### Baseline Models
 
 #### Models
 
